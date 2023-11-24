@@ -74,8 +74,8 @@ const Cart = require("../models/cart");
 
 const renderProductPage = async (req, res) => {
   try {
-//     const cartId = await Cart.findOne(_id);
-// console.log(cartId);
+    //     const cartId = await Cart.findOne(_id);
+    // console.log(cartId);
 
     res.render("product");
   } catch (error) {
@@ -86,11 +86,8 @@ const renderProductPage = async (req, res) => {
 const orderCreate = async (req, res) => {
   try {
     const userId = req.user._id;
-
     const cartId = req.body.cart_id;
-
     const { status } = req.body;
-
     const cartData = await Cart.findOne({
       _id: cartId,
       userId: userId,
