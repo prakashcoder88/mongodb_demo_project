@@ -6,7 +6,7 @@ const {userVerifyJwtToken,adminVerifyJwtToken} = require('../middleware/auth')
 const upload = require("../middleware/fileUpload")
 
 
-router.post('/user/adduser', userController.addUser)
+router.post('/user/register', userController.addUser)
 router.get('/user/renderLogin', userController.renderLogin)
 router.post('/user/login', userController.loginUser)
 

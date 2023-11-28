@@ -19,12 +19,7 @@ app.use(bodyparser.urlencoded({extended:true}))
 app.set('view engine','ejs');
 app.set('views',path.join(__dirname,'./src/views'));
 
-// app.use((req, res, next) => {
-//     const token = req.headers["auth"];
-//     console.log(token);
-//     ejs.locals.token = token;
-//     next();
-// });
+
 
 app.use('/api', userRoutes)
 app.use('/api', productRoutes)
@@ -32,7 +27,7 @@ app.use('/api', cartRoutes)
 app.use('/api', orderRoutes)
 
 
-app.listen(PORT, () =>{
+module.exports = app.listen(PORT, () =>{
     console.log(`Server successfully connected on port no :${PORT}`);
 })
 

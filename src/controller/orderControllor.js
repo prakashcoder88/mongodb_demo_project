@@ -74,10 +74,10 @@ const Cart = require("../models/cart");
 
 const renderProductPage = async (req, res) => {
   try {
-    //     const cartId = await Cart.findOne(_id);
-    // console.log(cartId);
+        const cartId = await Cart.find();
+    console.log(cartId);
 
-    res.render("product");
+    res.render("product",{cartId:cartId});//
   } catch (error) {
     console.log(error);
   }
@@ -132,14 +132,33 @@ const orderCreate = async (req, res) => {
     let orderData = new Order({
       userId,
       products: cartData.products,
-      totalamount: cartData.totalamount,
+      amount: cartData.totalamount,
       currency: "INR",
       receipt: options.receipt,
       status: status,
     });
 
-    const order = await razorpay.orders.create(options);
-
+    const order = razorpay.orders.create(options,
+      (err, order)=>{
+        if(!err){
+            res.status(200).send({
+                success:true,
+                msg:'Order Created',
+                order_id:order.id,
+                amount:amount,
+                key_id:RAZORPAY_ID_KEY,
+                // product_name:req.body.name,
+                // description:req.body.description,
+                contact:"9898987887",
+                        name: "prakash",
+                        email: "prakashpatel.vhits@gmail.com"
+            });
+        }
+        else{
+            res.status(400).send({success:false,msg:'Something went wrong!'});
+        }
+    });
+console.log(order);
     await orderData.save();
     await Cart.findByIdAndDelete(cartId);
 
@@ -160,7 +179,7 @@ const orderCreate = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({
+    return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });

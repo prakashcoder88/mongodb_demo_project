@@ -4,7 +4,7 @@
     "existinguser":"Email address alraedy register",
     "existingphone": "Phone number alraedy register",
     "referral":"Invalid referral code",
-    "created":"User Created Successfully",
+    "created":"User created successfully",
     "not_created": "User not created",
     "Not_authorized":"You are unauthorized or your account is deleted",
     "success":"User login successfully",
