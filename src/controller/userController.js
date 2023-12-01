@@ -9,24 +9,20 @@ const {
   generateOTP,
   otpExpireTime,
 } = require("../services/commonServices");
-const responseMeassage = require("../utils/responseMeassage.json");
+const responseMessage = require("../utils/responseMeassage.json");
 const { generateToken } = require("../utils/jwt");
 
-async function renderLogin (req,res){
-
+async function renderLogin(req, res) {
   try {
-      res.render('login');
-
+    res.render("login");
   } catch (error) {
-      console.log(error.message);
+    console.log(error.message);
   }
-
 }
-
 
 async function addUser(req, res) {
   try {
-    const { name, email, password, phone, address,role, referral } = req.body;
+    const { name, email, password, phone, address, role, referral } = req.body;
 
     const username =
       name.replace(/\s/g, "").toLowerCase() +
@@ -37,35 +33,35 @@ async function addUser(req, res) {
     if (!name && !email && !phone && !password && !referral) {
       res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        meassage: responseMeassage.Required,
+        message: responseMessage.Required,
       });
     } else if (!passwordValidate(password)) {
       res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        meassage: responseMeassage.passwordvalidate,
+        message: responseMessage.passwordvalidate,
       });
     } else {
       const existingUser = await User.findOne({ email });
       const existingPhone = await User.findOne({ phone });
 
       if (existingUser && existingPhone) {
-        const meassage = existingUser
-          ? responseMeassage.existinguser
-          : responseMeassage.existingphone;
+        const message = existingUser
+          ? responseMessage.existinguser
+          : responseMessage.existingphone;
 
         res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          meassage,
+          message,
         });
       } else {
         const referralUser = await User.findOne({ referralcode: referral });
         if (!referralUser) {
           res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            meassage: responseMeassage.referral,
+            message: responseMessage.referral,
           });
         }
-       
+
         let passwordHash = await passwordEncrypt(password);
 
         const userData = new User({
@@ -97,18 +93,17 @@ async function addUser(req, res) {
 
             res.status(201).json({
               status: StatusCodes.CREATED,
-              meassage: responseMeassage.created,
+              message: responseMessage.created,
               data: data,
             });
           })
           .catch((err) => {
             res.status(500).json({
               status: StatusCodes.INTERNAL_SERVER_ERROR,
-              meassage: responseMeassage.not_created,
+              message: responseMessage.not_created,
               err: err,
             });
           });
-      
       }
     }
   } catch (error) {
@@ -122,7 +117,7 @@ async function addUser(req, res) {
 
 async function loginUser(req, res) {
   try {
-    let { masterfield, password } = req.body;
+    let { username, email, phone, masterfield, password } = req.body;
 
     const user = await User.findOne({
       $or: [
@@ -133,14 +128,14 @@ async function loginUser(req, res) {
     });
 
     if (!user) {
-      res.status(401).json({
-        status: StatusCodes.UNAUTHORIZED,
-        message: responseMeassage.Not_authorized,
+      return res.status(404).json({
+        status: StatusCodes.NOT_FOUND,
+        message: responseMessage.not_found,
       });
     } else if (user.isActivated) {
-      res.status(401).json({
+      return res.status(401).json({
         status: StatusCodes.UNAUTHORIZED,
-        meassage: responseMeassage.Not_authorized,
+        meassage: responseMessage.Not_authorized,
       });
     } else {
       const isvalid = await bcrypt.compare(password, user.password);
@@ -148,21 +143,21 @@ async function loginUser(req, res) {
       if (!isvalid) {
         return res.status(401).json({
           status: StatusCodes.UNAUTHORIZED,
-          message: responseMeassage.notmatch,
+          message: responseMessage.notmatch,
         });
       } else {
         const { error, token } = await generateToken({ _id: user._id });
 
         if (error) {
-          res.status(400).json({
+          return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMeassage.notcreatetoken,
+            message: responseMessage.notcreatetoken,
           });
         } else {
           return res.status(200).json({
             status: StatusCodes.OK,
             success: true,
-            message: responseMeassage.success,
+            message: responseMessage.success,
             accesstoken: token,
           });
         }
@@ -171,10 +166,35 @@ async function loginUser(req, res) {
   } catch (error) {
     return res.status(401).json({
       status: 401,
-      message: responseMeassage.notsuccess,
+      message: responseMessage.notsuccess,
     });
   }
 }
+
+async function getUserDetails(req,res){
+  try {
+    const userId = req.user
+
+     const getUser = await User.findOne({_id: userId})
+
+     if(!getUser){
+      return res.status(404).json({
+        status:StatusCodes.NOT_FOUND,
+        message:responseMessage.not_found
+      })
+     }else{
+      return res.status(200).json({
+        status:StatusCodes.OK,
+        message:"User details found",
+        data:getUser
+      })
+     }
+
+  } catch (error) {
+    
+  }
+}
+
 
 async function changePassword(req, res) {
   try {
@@ -186,14 +206,14 @@ async function changePassword(req, res) {
     if (!checkOldPassword) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMeassage.passwordnotmatch,
+        message: responseMessage.passwordnotmatch,
       });
     }
     const checkNewPassword = await bcrypt.compare(newPassword, user.password);
     if (checkNewPassword) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMeassage.newpasswordnotmatch,
+        message: responseMessage.newpasswordnotmatch,
       });
     }
     const passwordHash = await passwordEncrypt(newPassword, user.password);
@@ -206,14 +226,14 @@ async function changePassword(req, res) {
       .then((updatePassword) => {
         return res.status(200).json({
           status: StatusCodes.OK,
-          message: responseMeassage.passwordupdate,
+          message: responseMessage.passwordupdate,
           data: updatePassword,
         });
       })
       .catch((err) => {
         return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          message: responseMeassage.notupdatepassword,
+          message: responseMessage.notupdatepassword,
           err: err,
         });
       });
@@ -239,7 +259,7 @@ async function forgotPassword(req, res) {
       if (!checkEmail) {
         return res.status(404).json({
           status: StatusCodes.NOT_FOUND,
-          message: responseMeassage.not_found,
+          message: responseMessage.not_found,
         });
       }
       const otpExpire = new Date();
@@ -282,17 +302,17 @@ async function verifyOtp(req, res) {
       if (currentTime <= otpExpirationTime) {
         res
           .status(200)
-          .json({ status: StatusCodes.OK, message: responseMeassage.verify });
+          .json({ status: StatusCodes.OK, message: responseMessage.verify });
       } else {
         res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          error: responseMeassage.otpexpired,
+          error: responseMessage.otpexpired,
         });
       }
     } else {
       res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        error: responseMeassage.otpinvalid,
+        error: responseMessage.otpinvalid,
       });
     }
   } catch (error) {
@@ -370,8 +390,8 @@ async function updateUser(req, res) {
 
     if (existingUser || existingPhone) {
       const message = existingUser
-        ? responseMeassage.existinguser
-        : responseMeassage.existingphone;
+        ? responseMessage.existinguser
+        : responseMessage.existingphone;
 
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
@@ -384,7 +404,7 @@ async function updateUser(req, res) {
     if (!user) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMeassage.not_found,
+        message: responseMessage.not_found,
       });
     }
 
@@ -400,7 +420,7 @@ async function updateUser(req, res) {
     );
 
     return res.status(200).json({
-      success: true,
+      status: StatusCodes.OK,
       message: "User Data Updated Successfully",
       data: result,
     });
@@ -423,9 +443,10 @@ async function uploadImage(req, res) {
     if (!user) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMeassage.not_found,
+        message: responseMessage.not_found,
       });
-    } else {
+    }
+    else {
       const profileImageUrl = user.profileimage;
 
       if (profileImageUrl) {
@@ -450,7 +471,7 @@ async function uploadImage(req, res) {
     );
 
     return res.status(200).json({
-      success: true,
+      status: StatusCodes.OK,
       message: "User Data Updated Successfully",
       data: result,
     });
@@ -464,9 +485,6 @@ async function uploadImage(req, res) {
   }
 }
 
-
-
-
 module.exports = {
   addUser,
   loginUser,
@@ -476,5 +494,6 @@ module.exports = {
   resetPassword,
   updateUser,
   uploadImage,
-  renderLogin
+  renderLogin,
+  getUserDetails
 };

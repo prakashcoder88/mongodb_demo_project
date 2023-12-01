@@ -15,7 +15,7 @@
     "newpasswordnotmatch":"NewPassword and OldPassword are match",
     "passwordupdate":"Password has been successfully updated",
     "notupdatepassword":"Password Not updated",
-    "not_found":"User or email not found",
+    "not_found":"User or email   not found",
     "verify":"OTP verified successfully",
     "otpexpired":"OTP has expired",
     "otpinvalid":"Invalid OTP",
@@ -25,7 +25,7 @@
 
 
     "PRODUCTEXIST":"ProductName Alredy Exists",
-    "PRODUCTADD":" Product Add Successfully",
+    "PRODUCTADD":" Product add successfully",
     "PRODUCTNOTADD":"Product Not Add",
     "LIKED":"Product like",
     "DISLIKED":"Product dislike",

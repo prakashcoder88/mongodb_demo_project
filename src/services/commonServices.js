@@ -7,7 +7,7 @@ const passwordEncrypt = async(password) =>{
 }
 
 const passwordValidate = (password) =>{
-    const pattern = /^[^\s]{6,10}$/;
+    const pattern = /^[^\s]{6,16}$/;
     return pattern.test(password)
 }
 
@@ -29,7 +29,7 @@ function generateOTP() {
 }
 
 const otpExpireTime = ()=>{
-    const expiry = Date.now() + 2 * 60 * 1000;
+    const expiry = Date.now() + 5 * 60 * 1000;
     const expiryIST = new Date(expiry).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
     });
