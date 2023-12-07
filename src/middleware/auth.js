@@ -115,5 +115,6 @@ async function adminVerifyJwtToken(req, res, next) {
 module.exports ={
     userVerifyJwtToken,
     sellerVerifyJwtToken,
-    adminVerifyJwtToken
+    adminVerifyJwtToken,
+    
 }

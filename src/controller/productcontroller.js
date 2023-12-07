@@ -66,7 +66,6 @@ async function addProduct(req, res) {
     });
   }
 }
-
 async function productStatusChange(req, res) {
   try {
     const productId = req.params.id;

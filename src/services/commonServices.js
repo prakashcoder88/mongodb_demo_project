@@ -24,7 +24,7 @@ function referralCodeGenerate(){
 }
 
 function generateOTP() {
-    const otp = Math.floor(10000 + Math.random() * 90000).toString();
+    const otp = Math.floor(1000 + Math.random() * 90000).toString();
     return otp;
 }
 
@@ -35,6 +35,7 @@ const otpExpireTime = ()=>{
     });
     return expiryIST;
 }
+
 
 
 module.exports = {

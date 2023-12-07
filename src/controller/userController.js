@@ -2,6 +2,7 @@ const User = require("../models/user");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
+const { blockTokens } = require("../services/commonServices");
 const {
   passwordEncrypt,
   passwordValidate,
@@ -661,6 +662,19 @@ async function uploadImage(req, res) {
     });
   }
 }
+async function logout(req, res){
+  try {
+    const token = req.headers.auth;
+
+  return res.status(200).json({
+    status: StatusCodes.OK,
+    message: responseMessage.LOGOUT,
+  });
+    
+  } catch (error) {
+   console.log(error); 
+  }
+}
 
 module.exports = {
   addUpdateUser,
@@ -674,5 +688,6 @@ module.exports = {
   uploadImage,
   //renderLogin,
   getUserDetails,
-  getAllUserDetails
+  getAllUserDetails,
+  logout
 };

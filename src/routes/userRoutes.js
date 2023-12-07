@@ -19,6 +19,7 @@ router.post('/user/verifyotp', userController.verifyOtp)
 router.patch('/user/resetpassword', userController.resetPassword)
 router.patch('/user/updateuser', userVerifyJwtToken,upload,userController.updateUser)
 router.post('/user/profilepic', userVerifyJwtToken,upload,userController.uploadImage)
+router.post('/user/logout', userVerifyJwtToken,userController.logout)
 
 
 

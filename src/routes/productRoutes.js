@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const productcontroller = require('../controller/productcontroller')
-const{sellerVerifyJwtToken,userVerifyJwtToken,adminVerifyJwtToken} =require('../middleware/auth')
+const{sellerVerifyJwtToken,userVerifyJwtToken,adminVerifyJwtToken,} =require('../middleware/auth')
 const { productSchema } = require('../services/productvalidation');
 const upload = require("../middleware/fileUpload")
 
