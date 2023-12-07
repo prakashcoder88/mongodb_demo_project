@@ -1,4 +1,4 @@
-
+const fs = require('fs')
 const { StatusCodes } = require("http-status-codes");
 const responseMeassage = require("../utils/responseMeassage.json");
 const Favorite = require("../models/favorite");
@@ -288,38 +288,38 @@ async function demoaggregate(req, res) {
 
 async function uploadImage(req, res) {
   try {
-    // const userId = req.user;
-    const productId = req.params.id;
-    // const user = await User.findOne({ _id: userId });
-    const product = await Product.findOne({_id:productId})
 
+    const productId = req.params.id;
+
+    const product = await Product.findOne({_id:productId})
+   
     if (!product) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
         message: responseMeassage.not_found,
       });
     } 
-    // else {
-    //   const productImageUrl = user.productimage;
+    else {
+      const productImageUrl = product.productimage;
 
-    //   if (productImageUrl) {
-    //     fs.unlink(`./public/productimage/${productImageUrl}`, (err) => {
-    //       if (err) {
-    //         console.log("Error while deleting old image:");
-    //       } else {
-    //         console.log("Old image deleted successfully:", productImageUrl);
-    //       }
-    //     });
-    //   }
-    // }
+      if (productImageUrl) {
+        fs.unlink(`./public/uploads/${productImageUrl}`, (err) => {
+          if (err) {
+            console.log("Error while deleting old image:");
+          } else {
+            console.log("Old image deleted successfully:", productImageUrl);
+          }
+        });
+      }
+    }
 
-    const updatedUserData = {
+    const updatedProductData = {
       productimage: req.fileurl,
     };
 
     const result = await Product.findByIdAndUpdate(
       productId,
-      { $set: updatedUserData },
+      { $set: updatedProductData },
       { new: true }
     );
 
@@ -328,8 +328,9 @@ async function uploadImage(req, res) {
       message: "Product image upload successfully",
       data: result,
     });
+  
   } catch (error) {
-    // console.log(error);
+    console.log(error);
     return res.status(500).json({
       status:StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,

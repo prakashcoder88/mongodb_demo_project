@@ -12,11 +12,157 @@ const {
 const responseMessage = require("../utils/responseMeassage.json");
 const { generateToken } = require("../utils/jwt");
 
-async function renderLogin(req, res) {
+// async function renderLogin(req, res) {
+//   try {
+//     res.render("login");
+//   } catch (error) {
+//     console.log(error.message);
+//   }
+// }
+
+async function addUpdateUser(req, res) {
   try {
-    res.render("login");
+    // const userId = req.user;
+    const { userId } = req;
+    const { name, email, password, phone, address, role, referral } = req.body;
+
+    // Check if it's an update or create operation
+    const isUpdate = userId && (email || phone);
+
+    // If it's an update, handle it
+    if (isUpdate) {
+      const existingUser = await User.findOne({
+        $and: [{ _id: userId }, { $or: [{ email }, { phone }] }],
+      });
+
+      if (existingUser) {
+        const message =
+          existingUser.email === email
+            ? responseMessage.existinguser
+            : responseMessage.existingphone;
+
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message,
+        });
+      }
+
+      const user = await User.findOne({ _id: userId });
+
+      if (!user) {
+        return res.status(404).json({
+          status: StatusCodes.NOT_FOUND,
+          message: responseMessage.not_found,
+        });
+      }
+
+      const updatedUserData = {
+        email,
+        phone,
+      };
+
+      const result = await User.findByIdAndUpdate(
+        userId,
+        { $set: updatedUserData },
+        { new: true }
+      );
+
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: "User Data Updated Successfully",
+        data: result,
+      });
+    } else {
+      // If it's a create operation, handle it
+      const username =
+        name.replace(/\s/g, "").toLowerCase() +
+        Math.floor(Math.random().toFixed(2) * 100);
+
+      let referralcode = referralCodeGenerate();
+
+      if (!name || !email || !phone || !password || !referral) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: responseMessage.Required,
+        });
+      } else if (!passwordValidate(password)) {
+        return res.status(400).json({
+          status: StatusCodes.BAD_REQUEST,
+          message: responseMessage.passwordvalidate,
+        });
+      } else {
+        const existingUser = await User.findOne({ email });
+        const existingPhone = await User.findOne({ phone });
+
+        if (existingUser && existingPhone) {
+          const message = existingUser
+            ? responseMessage.existinguser
+            : responseMessage.existingphone;
+
+          return res.status(400).json({
+            status: StatusCodes.BAD_REQUEST,
+            message,
+          });
+        } else {
+          const referralUser = await User.findOne({ referralcode: referral });
+          if (!referralUser) {
+            return res.status(400).json({
+              status: StatusCodes.BAD_REQUEST,
+              message: responseMessage.referral,
+            });
+          }
+
+          let passwordHash = await passwordEncrypt(password);
+
+          const userData = new User({
+            name,
+            username,
+            email,
+            password: passwordHash,
+            phone,
+            address: {
+              address_Line_1: address.address_Line_1,
+              City: address.City,
+              State: address.State,
+              PostalCode: address.PostalCode,
+              Country: address.Country,
+            },
+            referralcode: referralcode,
+            referral,
+            referralBy: referralUser._id,
+            profileimage: req.fileurl,
+            rewards: 0,
+            role,
+          });
+
+          userData
+            .save()
+            .then(async (data) => {
+              referralUser.rewards += 1;
+              await referralUser.save();
+
+              res.status(201).json({
+                status: StatusCodes.CREATED,
+                message: responseMessage.created,
+                data: data,
+              });
+            })
+            .catch((err) => {
+              res.status(500).json({
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                message: responseMessage.not_created,
+                err: err,
+              });
+            });
+        }
+      }
+    }
   } catch (error) {
-    console.log(error.message);
+    console.log(error);
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: "Internal Server Error",
+    });
   }
 }
 
@@ -191,10 +337,39 @@ async function getUserDetails(req,res){
      }
 
   } catch (error) {
-    
+    return res.status(500).json({
+      status:StatusCodes.INTERNAL_SERVER_ERROR,
+      message:responseMessage.INTERNAL_SERVER_ERROR
+    })
   }
 }
 
+async function getAllUserDetails(req,res){
+  try {
+    const userId = req.user
+
+     const getUsers = await User.find({})
+
+     if(!getUsers){
+      return res.status(404).json({
+        status:StatusCodes.NOT_FOUND,
+        message:responseMessage.not_found
+      })
+     }else{
+      return res.status(200).json({
+        status:StatusCodes.OK,
+        message:"Users details found",
+        data:getUsers
+      })
+     }
+
+  } catch (error) {
+    return res.status(500).json({
+      status:StatusCodes.INTERNAL_SERVER_ERROR,
+      message:responseMessage.INTERNAL_SERVER_ERROR
+    })
+  }
+}
 
 async function changePassword(req, res) {
   try {
@@ -262,6 +437,7 @@ async function forgotPassword(req, res) {
           message: responseMessage.not_found,
         });
       }
+      //const otpExpires = otpExpireTime;
       const otpExpire = new Date();
 
       const otpCode = generateOTP();
@@ -270,7 +446,8 @@ async function forgotPassword(req, res) {
         { $set: { otp: otpCode, otpExpire: otpExpire } },
         { new: true }
       );
-      // await forgotPasswordSendEmail(email, otpCode);
+       await SendEmail(email, otpCode);
+       
       return res.status(200).json({
         status: StatusCodes.OK,
         message: "Otp Send Successfully in your email",
@@ -336,7 +513,7 @@ async function resetPassword(req, res) {
     } else if (!passwordValidate(newPassword)) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMeassage.passwordvalidate,
+        message: responseMessage.passwordvalidate,
       });
     } else {
       const user = await User.findOne({ email });
@@ -344,18 +521,18 @@ async function resetPassword(req, res) {
       if (!user) {
         return res.status(404).json({
           status: StatusCodes.NOT_FOUND,
-          message: responseMeassage.not_found,
+          message: responseMessage.not_found,
         });
       } else {
         if (newPassword !== confirmPassword) {
           return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMeassage.notmatch,
+            message: responseMessage.notmatch,
           });
         } else if (user.otpExpire < new Date()) {
           return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMeassage.session_time_out,
+            message: responseMessage.session_time_out,
           });
         } else {
           const passwordHash = await passwordEncrypt(newPassword);
@@ -367,7 +544,7 @@ async function resetPassword(req, res) {
 
           return res.status(200).json({
             status: StatusCodes.OK,
-            message: responseMeassage.passwordupdate,
+            message: responseMessage.passwordupdate,
           });
         }
       }
@@ -486,6 +663,7 @@ async function uploadImage(req, res) {
 }
 
 module.exports = {
+  addUpdateUser,
   addUser,
   loginUser,
   changePassword,
@@ -494,6 +672,7 @@ module.exports = {
   resetPassword,
   updateUser,
   uploadImage,
-  renderLogin,
-  getUserDetails
+  //renderLogin,
+  getUserDetails,
+  getAllUserDetails
 };

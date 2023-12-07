@@ -7,9 +7,11 @@ const upload = require("../middleware/fileUpload")
 
 
 router.post('/user/register', userController.addUser)
-router.get('/user/renderLogin', userController.renderLogin)
+router.post('/user/addupdate', userController.addUpdateUser)
+//router.get('/user/renderLogin', userController.renderLogin)
 router.post('/user/login', userController.loginUser)
 router.get('/user/getuser', userVerifyJwtToken,userController.getUserDetails)
+router.get('/user/getalluser', adminVerifyJwtToken,userController.getAllUserDetails)
 
 router.patch('/user/changepassword', userVerifyJwtToken,userController.changePassword)
 router.post('/user/forgotpassword', userController.forgotPassword)

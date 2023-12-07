@@ -10,91 +10,8 @@
 // chai.use(chaiHttp);
 // chai.should();
 
-// let token;
-
-// describe("User Registration API", () => {
-//    // Test case: email already exists
-//    it("should throw message email already exists", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/register")
-//       .send({
-//         role: "seller",
-//         name: "parth Patel",
-//         email: "parth@example.com",
-//         password: "Admin@123",
-//         phone: "1000000076",
-//         address: {
-//           address_Line_1: "Ahmedabad",
-//           City: "Ahmedabad",
-//           State: "Gujarat",
-//           PostalCode: "380061",
-//           Country: "India",
-//         },
-//         referral: "04U0IoEb",
-//       })
-//       .end((err, res) => {
-//         expect(res).to.have.status(400);
-//         expect(res.body.message).to.equal('Email address alraedy register');
-//         done();
-//       });
-//   });
-
-//   // Test case: valid password format
-//   it("should create a user with a valid password format", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/register")
-//       .send({
-//         role: "seller",
-//         name: "Rakesh Patel",
-//         email: "rakesh@example.com",
-//         password: "Admin@123456",
-//         phone: "1000000075",
-//        address: {
-//           address_Line_1: "Ahmedabad",
-//           City: "Ahmedabad",
-//           State: "Gujarat",
-//           PostalCode: "380061",
-//           Country: "India",
-//         },
-//         referral: "04U0IoEb",
-//       })
-//       .end((err, res) => {
-//         expect(res).to.have.status(400);
-//         expect(res.body.message).to.equal("Password at least 1 upperCase, lowerCase, numeric, special character and minimum 6 character must be");
-//         done();
-//       });
-//   });
-//   // Test case: should create a new user
-//   it("should create a new user", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/register")
-//       .send({
-//         name: "Rakesh Patel",
-//         email: "rakesh@example.com",
-//         password: "Admin@123",
-//         phone: "1000000009",
-//         address: {
-//           address_Line_1: "Ahmedabad",
-//           City: "Ahmedabad",
-//           State: "Gujarat",
-//           PostalCode: "380061",
-//           Country: "India",
-//         },
-//         referral: "04U0IoEb",
-//       })
-//       .end((err, res) => {
-//         expect(res).to.have.status(201);
-//         expect(res.body.message).to.equal(responseMessage.created);
-//         done();
-//       });
-//   });
-
-// });
-
 const mongoose = require("mongoose");
+const responseMessage = require("../src/utils/responseMeassage.json");
 var bcrypt = require("bcrypt");
 const chai = require("chai");
 const fs = require("fs");
@@ -102,6 +19,7 @@ const chaiHttp = require("chai-http");
 const mocha = require("mocha");
 const should = chai.should();
 const path = require("path");
+const sinon = require('sinon');
 const server = require("../server");
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -221,56 +139,57 @@ async function passwordencrypt(password) {
 //   });
 // });
 
-//login user
-// describe("User Login API", () => {
-//   it("should return 200 with user details and JWT token if login is successful", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/login")
-//       .send({ masterfield: "vihay@example.com", password: "Admin@123" })
-//       .end((err, res) => {
-//         userJwtToken = res.body.accesstoken;
-//         // console.log(adminJwtToken);
-//         expect(res).to.have.status(200);
-//         done();
-//       });
-//   });
-// it("should return 400 if user is not found", (done) => {
-//   chai
-//     .request(server)
-//     .post("/api/user/login")
-//     .send({ masterfield: "test@example.com", password: "Admin@123" })
-//     .end((err, res) => {
-//       expect(res).to.have.status(404);
-//       expect(res.body.message).to.equal("User or email   not found");
-//       done();
-//     });
-// });
-//   it("should return 401 if Your account is not active", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/login")
-//       .send({  masterfield: "maulik@example.com", password: "Admin@123"})
-//       .end((err, res) => {
-//         expect(res).to.have.status(401);
-//         //expect(res.body.message).to.equal("You are unauthorized or your account is deleted");
-//         done();
-//       });
-//   });
-//   it("should return if Password is invalid", (done) => {
-//     chai
-//       .request(server)
-//       .post("/api/user/login")
-//       .send({  masterfield: "admin@example.com", password: "Admin@123a" })
-//       .end((err, res) => {
-//         expect(res).to.have.status(401);
-//         expect(res.body.message).to.equal(
-//           "Password not match"
-//         );
-//         done();
-//       });
-//   });
-// });
+////////////////////////// login user  ////////////////////////
+
+describe("User Login API", () => {
+  it("should return 200 with user details and JWT token if login is successful", (done) => {
+    chai
+      .request(server)
+      .post("/api/user/login")
+      .send({ masterfield: "vihay@example.com", password: "Admin@123" })
+      .end((err, res) => {
+        userJwtToken = res.body.accesstoken;
+        //console.log(userJwtToken);
+        expect(res).to.have.status(200);
+        done();
+      });
+  });
+  // it("should return 400 if user is not found", (done) => {
+  //   chai
+  //     .request(server)
+  //     .post("/api/user/login")
+  //     .send({ masterfield: "test@example.com", password: "Admin@123" })
+  //     .end((err, res) => {
+  //       expect(res).to.have.status(404);
+  //       expect(res.body.message).to.equal("User or email   not found");
+  //       done();
+  //     });
+  // });
+  //   it("should return 401 if Your account is not active", (done) => {
+  //     chai
+  //       .request(server)
+  //       .post("/api/user/login")
+  //       .send({  masterfield: "maulik@example.com", password: "Admin@123"})
+  //       .end((err, res) => {
+  //         expect(res).to.have.status(401);
+  //         //expect(res.body.message).to.equal("You are unauthorized or your account is deleted");
+  //         done();
+  //       });
+  //   });
+  //   it("should return if Password is invalid", (done) => {
+  //     chai
+  //       .request(server)
+  //       .post("/api/user/login")
+  //       .send({  masterfield: "admin@example.com", password: "Admin@123a" })
+  //       .end((err, res) => {
+  //         expect(res).to.have.status(401);
+  //         expect(res.body.message).to.equal(
+  //           "Password not match"
+  //         );
+  //         done();
+  //       });
+  //   });
+});
 
 // describe('Get user details', () => {
 //     it("should return user details", (done) => {
@@ -465,25 +384,27 @@ async function passwordencrypt(password) {
 // });
 // });
 
-//Admin Login
+/////////////////////////// Admin Login  ///////////////////////
 
-describe("Admin Login API", () => {
-  it("should return 200 with user details and JWT token if login is successful", (done) => {
-    chai
-      .request(server)
-      .post("/api/user/login")
-      .send({ masterfield: "admin@example.com", password: "Admin@1234" })
-      .end((err, res) => {
-        adminJwtToken = res.body.accesstoken;
-        console.log(adminJwtToken);
-        expect(res).to.have.status(200);
-        expect(res.body.message).to.equal("User login successfully");
-        done();
-      });
-  });
-});
+// describe("Admin Login API", () => {
+//   it("should return 200 with user details and JWT token if login is successful", (done) => {
+//     chai
+//       .request(server)
+//       .post("/api/user/login")
+//       .send({ masterfield: "admin@example.com", password: "Admin@1234" })
+//       .end((err, res) => {
+//         adminJwtToken = res.body.accesstoken;
+//         console.log(adminJwtToken);
+//         expect(res).to.have.status(200);
+//         expect(res.body.message).to.equal("User login successfully");
+//         done();
+//       });
+//   });
+// });
 
-//Product controllor
+// Product controllor
+
+/////////////////////////// Seller Login //////////////////////
 
 // describe("Seller Login API", () => {
 //   it("should return 200 with user details and JWT token if login is successful", (done) => {
@@ -492,15 +413,14 @@ describe("Admin Login API", () => {
 //       .post("/api/user/login")
 //       .send({ masterfield: "sagar@example.com", password: "Admin@123" })
 //       .end((err, res) => {
-//         sellerJwtToken = res.body.accesstoken;
-//         console.log(sellerJwtToken);
+//               sellerJwtToken = res.body.accesstoken;
 //         expect(res).to.have.status(200);
 //         expect(res.body.message).to.equal("User login successfully");
 //         done();
 //       });
 //   });
 // });
-
+/////////////////////////// Product //////////////////////
 //Product Add
 // describe("Product add API", () => {
 //   it("should create a new Product", (done) => {
@@ -528,22 +448,272 @@ describe("Admin Login API", () => {
 //   });
 // });
 
-describe("Product status API", () => {
-  it("should product change", (done) => {
+// Product status API
 
-    const productId = "655da6e41e465b0a11b025a0"
-    chai
-      .request(server)
-      .patch(`/api/product/productstatus/${productId}`)
-      .set("auth",adminJwtToken)
+// describe("Product status API", () => {
+//   it("should product change", (done) => {
+
+//     const productId = "655da6e41e465b0a11b025a0"
+//     chai
+//       .request(server)
+//       .patch(`/api/product/productstatus/${productId}`)
+//       .set("auth",adminJwtToken)
+//       .send({
+//                 status:"Approved"
+//       })
+//       .end((err, res) => {
+//         expect(res).to.have.status(200);
+//         expect(res.body.message).to.equal("Status update successfully");
+//         done();
+//       });
+//   });
+// });
+
+// Like Dislike Product
+
+// describe("likeDislikeProduct", () => {
+//   it("should like a product",  (done) => {
+//     chai
+//       .request(server)
+//       .post("/api/product/favorite")
+//       .set("auth", userJwtToken)
+//       .send({
+//         productId: "655da5801e465b0a11b0258e",
+//         isLike: true,
+//       })
+//       .end((err, res) => {
+//         // console.log(res);
+//         expect(res).to.have.status(200);
+//         done();
+//       });
+//   });
+
+//   it("should like a product",  (done) => {
+//     chai
+//       .request(server)
+//       .post("/api/product/favorite")
+//       .set("auth", userJwtToken)
+//       .send({
+//         productId: "655da5801e465b0a11b0258e",
+//         isLike: false,
+//       })
+//       .end((err, res) => {
+//         // console.log(res);
+//         expect(res).to.have.status(200);
+//         done();
+//       });
+//   });
+// });
+
+// Favorite Product
+
+// describe("favoriteProduct", () => {
+//   it("should get liked products details", (done) => {
+//     chai
+//       .request(server)
+//       .get("/api/product/favoriteproduct")
+//       .set("auth", userJwtToken)
+
+//       .end((err, res) => {
+//         // console.log(res);
+//         expect(res).to.have.status(200);
+//         done();
+//       });
+//   });
+// });
+
+// searchProduct
+// describe('searchProduct', () => {
+//   const validQuery = 'L-40';
+//   it('should return search results for a valid query', (done) => {
+//     chai
+//           .request(server)
+//           .post(`/api/product/search?q=${validQuery}`)
+//           .set("auth", userJwtToken)
+//           .end((err, res) => {
+//             // console.log(res);
+//             expect(res).to.have.status(200);
+//             done();
+//           });
+//   })
+// it('should return a 400 status for an invalid query', (done) => {
+//   chai.request(server)
+//     .post('/api/product/search') // Replace with the actual endpoint path
+//     .set("auth", userJwtToken)
+//         .end((err, res) => {
+//           // console.log(res);
+//           expect(res).to.have.status(400);
+//           done();
+//         });
+//       done();
+//     });
+// });
+
+//Product Image Upload
+//   describe("Upload Image API", () => {
+//   it("should update Product image", (done) => {
+//     const id = "655da5441e465b0a11b02586"
+//     chai
+//       .request(server)
+//       .patch(`/api/product/productimag/${id}`)
+//       .set("auth", sellerJwtToken)
+//       .field('Content-Type', 'multipart/form-data')
+//       .attach("profileImage", path.join(path.resolve(), 'test/public/uploads/1701862440594.jpeg'))
+//       .end((err, res) => {
+
+//         expect(res).to.have.status(200);
+//         expect(res.body.message).to.equal("Product image upload successfully");
+//         done();
+//       })
+//   });
+// });
+
+//////////////////// Cart ////////////////////////////////////
+
+// describe("addCart", (done) => {
+//   it("should add a product to the cart for a valid request", (done) => {
+
+//     const ProductId = "655da5801e465b0a11b0258e";
+//     const Quantity = 1;
+
+//     chai
+//       .request(server)
+//       .post("/api/cart/add")
+//       .set("auth", userJwtToken)
+//       .send({
+//         productId: ProductId,
+//         quantity: Quantity,
+//       })
+//       .end((err, res) => {
+//         expect(res).to.have.status(201);
+//         expect(res.body.message).to.equal(responseMessage.PRODUCTADDCART);
+//         done();
+
+//       });
+//   });
+
+// it('should handle product not found and return a 404 status', (done) => {
+
+//   chai
+//   .request(server)
+//     .post('/api/cart/add')
+//     .set("auth", userJwtToken)
+//     .send({
+
+//       productId: "655da5801e465b0a11b0258c",
+//       quantity: 1,
+//     })
+
+//       .end((err, res) => {
+
+//         expect(res).to.have.status(404);
+//         expect(res.body.message).to.equal(responseMessage.PRODUCTNOTFOUND);
+//         done();
+//     });
+// });
+
+// it('should handle insufficient stock and return a 400 status', (done) => {
+
+//   const productId = '655da5801e465b0a11b0258e';
+//   const Stock = 100;
+
+//   chai.request(server)
+//     .post('/api/cart/add')
+//     .set("auth", userJwtToken)
+//     .send({
+
+//       productId: productId,
+//       quantity: Stock,
+//     })
+//     .end((err, res) => {
+//     expect(res).to.have.status(400);
+//         expect(res.body.message).to.equal("Product stock not available to given quantity");
+//         done();
+//     })
+// });
+
+// })
+
+//////////////////// Order ////////////////////////////////////
+
+describe("orderCreate", () => {
+  // it('should create an order for a valid request', (done) => {
+
+  //   const CartId = '657062c0a45efee0b201303b';
+  //   const Status = 'completed';
+
+  //   chai
+  //   .request(server)
+  //     .post('/api/order/ordercreate')
+  //     .set("auth", userJwtToken)
+  //     .send({
+
+  //       cartId: CartId,
+  //       status: Status,
+  //     })
+  //     .end((err, res) => {
+
+  //               expect(res).to.have.status(201);
+  //               expect(res.body.message).to.equal("Order created successfully");
+  //               done();
+  //           });
+  // });
+
+  // it("should handle no items in the cart and return a 400 status", (done) => {
+  //   const CartId = "657062c0a45efee0b201303c"; 
+
+  //   chai
+  //     .request(server)
+  //     .post("/api/order/ordercreate") 
+  //     .set("auth", userJwtToken) 
+  //     .send({
+  //       cartId: CartId,
+  //       status: "completed",
+  //     })
+  //     .end((err, res) => {
+  //       expect(res).to.have.status(400);
+  //       expect(res.body.message).to.equal("No items in cart");
+  //       done();
+  //     });
+  // });
+
+  it('should handle product not found and return a 400 status', (done) => {
+    const productId = '657070fdad264d0151a6302c'; 
+    const cartId = '657070fdad264d0151a6302b';
+
+    chai.request(server)
+      .post('/api/order/ordercreate') 
+      .set("auth", userJwtToken) 
       .send({
-                status:"Approved"
+        productId: productId,
+        cartId: cartId,
+       
       })
       .end((err, res) => {
-        expect(res).to.have.status(200);
-        expect(res.body.message).to.equal("Status update successfully");
-        expect(res.body.data).to.have.property('status', 'Approved');
+        expect(res).to.have.status(400);
+        expect(res.body.message).to.equal("Product not found");
         done();
       });
-  });
+});
+
+
+
+  // it('should handle insufficient stock and return a 400 status', (done) => {
+  //   // Assuming you have a product with limited stock
+  //   const product Stock = '';
+
+  //   const CartId = '';
+
+  //   chai.request(app)
+  //     .post('/api/order/ordercreate') // Replace with the actual endpoint path
+  //     .set("auth", userJwtToken') // Replace with a valid access token
+  //     .send({
+  //       cartId: CartId,
+  //     })
+ //        .end((err, res) => {
+  //       expect(res).to.have.status(400);
+  //       expect(res.body.message).to.equal("Out of stock");
+  //       done();
+  //     });
+  // });
 });

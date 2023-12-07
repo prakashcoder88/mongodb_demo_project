@@ -12,5 +12,5 @@ router.post('/product/allproduct', userVerifyJwtToken, productcontroller.allProd
 router.post('/product/search', userVerifyJwtToken, productcontroller.searchProduct)
 router.get('/product/favoriteproduct', userVerifyJwtToken, productcontroller.favoriteProduct)
 router.get('/product/aggregatetest', userVerifyJwtToken, productcontroller.demoaggregate)
-router.patch('/product/productimag', sellerVerifyJwtToken,upload,productcontroller.uploadImage)
+router.patch('/product/productimag/:id', sellerVerifyJwtToken,upload,productcontroller.uploadImage)
 module.exports = router

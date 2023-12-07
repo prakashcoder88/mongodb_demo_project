@@ -9,7 +9,7 @@ async function addCart(req, res) {
     const { productId, quantity } = req.body;
 
     const product = await Product.findById(productId);
-    console.log(product.stock);
+
     if (!product) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
