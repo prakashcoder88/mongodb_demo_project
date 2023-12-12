@@ -1,9 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const responseMeassage = require("../utils/responseMeassage.json");
+const responseMeassage = require("../utils/responseMeassage.js");
 const Product = require("../models/product");
 const Cart = require("../models/cart");
 
-async function addCart(req, res) {
+exports.addCart = async (req, res) => {
   try {
     const userId = req.user._id;
     const { productId, quantity } = req.body;
@@ -75,7 +75,7 @@ async function addCart(req, res) {
   }
 }
 
-async function userCartList(req, res) {
+exports.userCartList = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -96,7 +96,7 @@ async function userCartList(req, res) {
   }
 }
 
-async function productQuantityUpdate(req, res) {
+exports.productQuantityUpdate = async (req, res) => {
   try {
     const userId = req.user._id;
     const { productId, action } = req.body;
@@ -159,8 +159,4 @@ async function productQuantityUpdate(req, res) {
 
 
 
-module.exports = {
-  addCart,
-  userCartList,
-  productQuantityUpdate,
-};
+

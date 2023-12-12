@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 require("../models/user")
-require("../controller/userController")
+require("../controller/UserController")
 const { JWT_SECRET_KEY } = process.env;
 
 const options = {

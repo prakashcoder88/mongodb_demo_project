@@ -2,15 +2,15 @@ const User = require("../models/user");
 const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
-const { blockTokens } = require("../services/commonServices");
+
 const {
   passwordEncrypt,
   passwordValidate,
   referralCodeGenerate,
   generateOTP,
   otpExpireTime,
-} = require("../services/commonServices");
-const responseMessage = require("../utils/responseMeassage.json");
+} = require("../services/CommonServices");
+const responseMessage = require("../utils/responseMeassage.js");
 const { generateToken } = require("../utils/jwt");
 
 // async function renderLogin(req, res) {
@@ -21,153 +21,153 @@ const { generateToken } = require("../utils/jwt");
 //   }
 // }
 
-async function addUpdateUser(req, res) {
-  try {
-    // const userId = req.user;
-    const { userId } = req;
-    const { name, email, password, phone, address, role, referral } = req.body;
+// exports.addUpdateUser = async(req, res) => {
+//   try {
+//     // const userId = req.user;
+//     const { userId } = req;
+//     const { name, email, password, phone, address, role, referral } = req.body;
 
-    // Check if it's an update or create operation
-    const isUpdate = userId && (email || phone);
+//     // Check if it's an update or create operation
+//     const isUpdate = userId && (email || phone);
 
-    // If it's an update, handle it
-    if (isUpdate) {
-      const existingUser = await User.findOne({
-        $and: [{ _id: userId }, { $or: [{ email }, { phone }] }],
-      });
+//     // If it's an update, handle it
+//     if (isUpdate) {
+//       const existingUser = await User.findOne({
+//         $and: [{ _id: userId }, { $or: [{ email }, { phone }] }],
+//       });
 
-      if (existingUser) {
-        const message =
-          existingUser.email === email
-            ? responseMessage.existinguser
-            : responseMessage.existingphone;
+//       if (existingUser) {
+//         const message =
+//           existingUser.email === email
+//             ? responseMessage.existinguser
+//             : responseMessage.existingphone;
 
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message,
-        });
-      }
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message,
+//         });
+//       }
 
-      const user = await User.findOne({ _id: userId });
+//       const user = await User.findOne({ _id: userId });
 
-      if (!user) {
-        return res.status(404).json({
-          status: StatusCodes.NOT_FOUND,
-          message: responseMessage.not_found,
-        });
-      }
+//       if (!user) {
+//         return res.status(404).json({
+//           status: StatusCodes.NOT_FOUND,
+//           message: responseMessage.not_found,
+//         });
+//       }
 
-      const updatedUserData = {
-        email,
-        phone,
-      };
+//       const updatedUserData = {
+//         email,
+//         phone,
+//       };
 
-      const result = await User.findByIdAndUpdate(
-        userId,
-        { $set: updatedUserData },
-        { new: true }
-      );
+//       const result = await User.findByIdAndUpdate(
+//         userId,
+//         { $set: updatedUserData },
+//         { new: true }
+//       );
 
-      return res.status(200).json({
-        status: StatusCodes.OK,
-        message: "User Data Updated Successfully",
-        data: result,
-      });
-    } else {
-      // If it's a create operation, handle it
-      const username =
-        name.replace(/\s/g, "").toLowerCase() +
-        Math.floor(Math.random().toFixed(2) * 100);
+//       return res.status(200).json({
+//         status: StatusCodes.OK,
+//         message: "User Data Updated Successfully",
+//         data: result,
+//       });
+//     } else {
+//       // If it's a create operation, handle it
+//       const username =
+//         name.replace(/\s/g, "").toLowerCase() +
+//         Math.floor(Math.random().toFixed(2) * 100);
 
-      let referralcode = referralCodeGenerate();
+//       let referralcode = referralCodeGenerate();
 
-      if (!name || !email || !phone || !password || !referral) {
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: responseMessage.Required,
-        });
-      } else if (!passwordValidate(password)) {
-        return res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: responseMessage.passwordvalidate,
-        });
-      } else {
-        const existingUser = await User.findOne({ email });
-        const existingPhone = await User.findOne({ phone });
+//       if (!name || !email || !phone || !password || !referral) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message: responseMessage.Required,
+//         });
+//       } else if (!passwordValidate(password)) {
+//         return res.status(400).json({
+//           status: StatusCodes.BAD_REQUEST,
+//           message: responseMessage.passwordvalidate,
+//         });
+//       } else {
+//         const existingUser = await User.findOne({ email });
+//         const existingPhone = await User.findOne({ phone });
 
-        if (existingUser && existingPhone) {
-          const message = existingUser
-            ? responseMessage.existinguser
-            : responseMessage.existingphone;
+//         if (existingUser && existingPhone) {
+//           const message = existingUser
+//             ? responseMessage.existinguser
+//             : responseMessage.existingphone;
 
-          return res.status(400).json({
-            status: StatusCodes.BAD_REQUEST,
-            message,
-          });
-        } else {
-          const referralUser = await User.findOne({ referralcode: referral });
-          if (!referralUser) {
-            return res.status(400).json({
-              status: StatusCodes.BAD_REQUEST,
-              message: responseMessage.referral,
-            });
-          }
+//           return res.status(400).json({
+//             status: StatusCodes.BAD_REQUEST,
+//             message,
+//           });
+//         } else {
+//           const referralUser = await User.findOne({ referralcode: referral });
+//           if (!referralUser) {
+//             return res.status(400).json({
+//               status: StatusCodes.BAD_REQUEST,
+//               message: responseMessage.referral,
+//             });
+//           }
 
-          let passwordHash = await passwordEncrypt(password);
+//           let passwordHash = await passwordEncrypt(password);
 
-          const userData = new User({
-            name,
-            username,
-            email,
-            password: passwordHash,
-            phone,
-            address: {
-              address_Line_1: address.address_Line_1,
-              City: address.City,
-              State: address.State,
-              PostalCode: address.PostalCode,
-              Country: address.Country,
-            },
-            referralcode: referralcode,
-            referral,
-            referralBy: referralUser._id,
-            profileimage: req.fileurl,
-            rewards: 0,
-            role,
-          });
+//           const userData = new User({
+//             name,
+//             username,
+//             email,
+//             password: passwordHash,
+//             phone,
+//             address: {
+//               address_Line_1: address.address_Line_1,
+//               City: address.City,
+//               State: address.State,
+//               PostalCode: address.PostalCode,
+//               Country: address.Country,
+//             },
+//             referralcode: referralcode,
+//             referral,
+//             referralBy: referralUser._id,
+//             profileimage: req.fileurl,
+//             rewards: 0,
+//             role,
+//           });
 
-          userData
-            .save()
-            .then(async (data) => {
-              referralUser.rewards += 1;
-              await referralUser.save();
+//           userData
+//             .save()
+//             .then(async (data) => {
+//               referralUser.rewards += 1;
+//               await referralUser.save();
 
-              res.status(201).json({
-                status: StatusCodes.CREATED,
-                message: responseMessage.created,
-                data: data,
-              });
-            })
-            .catch((err) => {
-              res.status(500).json({
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                message: responseMessage.not_created,
-                err: err,
-              });
-            });
-        }
-      }
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal Server Error",
-    });
-  }
-}
+//               res.status(201).json({
+//                 status: StatusCodes.CREATED,
+//                 message: responseMessage.created,
+//                 data: data,
+//               });
+//             })
+//             .catch((err) => {
+//               res.status(500).json({
+//                 status: StatusCodes.INTERNAL_SERVER_ERROR,
+//                 message: responseMessage.not_created,
+//                 err: err,
+//               });
+//             });
+//         }
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({
+//       status: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: "Internal Server Error",
+//     });
+//   }
+// }
 
-async function addUser(req, res) {
+exports.addUser = async (req, res) => {
   try {
     const { name, email, password, phone, address, role, referral } = req.body;
 
@@ -178,14 +178,14 @@ async function addUser(req, res) {
     let referralcode = referralCodeGenerate();
 
     if (!name && !email && !phone && !password && !referral) {
-      res.status(400).json({
+      return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMessage.Required,
+        message: responseMessage.REQUIRED,
       });
     } else if (!passwordValidate(password)) {
-      res.status(400).json({
+      return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMessage.passwordvalidate,
+        message: responseMessage.PASSWORD_VALIDATE,
       });
     } else {
       const existingUser = await User.findOne({ email });
@@ -193,25 +193,25 @@ async function addUser(req, res) {
 
       if (existingUser && existingPhone) {
         const message = existingUser
-          ? responseMessage.existinguser
-          : responseMessage.existingphone;
+          ? responseMessage.EXUSTING_USER
+          : responseMessage.EXISTING_PHONE;
 
-        res.status(400).json({
+          return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
           message,
         });
       } else {
         const referralUser = await User.findOne({ referralcode: referral });
         if (!referralUser) {
-          res.status(400).json({
+          return  res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMessage.referral,
+            message: responseMessage.REFERRAL,
           });
         }
 
         let passwordHash = await passwordEncrypt(password);
 
-        const userData = new User({
+        const userData = new User.create({
           name,
           username,
           email,
@@ -232,39 +232,28 @@ async function addUser(req, res) {
           role,
         });
 
-        userData
-          .save()
-          .then(async (data) => {
-            referralUser.rewards += 1;
-            await referralUser.save();
+        referralUser.rewards += 1;
+        await referralUser.save();
 
-            res.status(201).json({
-              status: StatusCodes.CREATED,
-              message: responseMessage.created,
-              data: data,
-            });
-          })
-          .catch((err) => {
-            res.status(500).json({
-              status: StatusCodes.INTERNAL_SERVER_ERROR,
-              message: responseMessage.not_created,
-              err: err,
-            });
-          });
+        return res.status(201).json({
+          status: StatusCodes.CREATED,
+          message: responseMessage.CREATED,
+          data: data,
+        });
       }
     }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal Server Error",
+      message: responseMessage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
-async function loginUser(req, res) {
+exports.loginUser = async (req, res) => {
   try {
-    let { username, email, phone, masterfield, password } = req.body;
+    let {masterfield, password } = req.body;
 
     const user = await User.findOne({
       $or: [
@@ -277,12 +266,12 @@ async function loginUser(req, res) {
     if (!user) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMessage.not_found,
+        message: responseMessage.NOTFOUND,
       });
     } else if (user.isActivated) {
       return res.status(401).json({
         status: StatusCodes.UNAUTHORIZED,
-        meassage: responseMessage.Not_authorized,
+        meassage: responseMessage.NOT_AUTHORIZED,
       });
     } else {
       const isvalid = await bcrypt.compare(password, user.password);
@@ -290,7 +279,7 @@ async function loginUser(req, res) {
       if (!isvalid) {
         return res.status(401).json({
           status: StatusCodes.UNAUTHORIZED,
-          message: responseMessage.notmatch,
+          message: responseMessage.NOT_MATCH,
         });
       } else {
         const { error, token } = await generateToken({ _id: user._id });
@@ -298,13 +287,13 @@ async function loginUser(req, res) {
         if (error) {
           return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMessage.notcreatetoken,
+            message: responseMessage.NOT_CREATE_TOKEN,
           });
         } else {
           return res.status(200).json({
             status: StatusCodes.OK,
             success: true,
-            message: responseMessage.success,
+            message: responseMessage.SUCCESS,
             accesstoken: token,
           });
         }
@@ -313,66 +302,64 @@ async function loginUser(req, res) {
   } catch (error) {
     return res.status(401).json({
       status: 401,
-      message: responseMessage.notsuccess,
+      message: responseMessage.NOT_SUCCESS,
     });
   }
-}
+};
 
-async function getUserDetails(req,res){
+exports.getUserDetails = async (req, res) => {
   try {
-    const userId = req.user
+    const userId = req.user;
 
-     const getUser = await User.findOne({_id: userId})
+    const getUser = await User.findOne({ _id: userId });
 
-     if(!getUser){
+    if (!getUser) {
       return res.status(404).json({
-        status:StatusCodes.NOT_FOUND,
-        message:responseMessage.not_found
-      })
-     }else{
+        status: StatusCodes.NOT_FOUND,
+        message: responseMessage.NOTFOUND,
+      });
+    } else {
       return res.status(200).json({
-        status:StatusCodes.OK,
-        message:"User details found",
-        data:getUser
-      })
-     }
-
+        status: StatusCodes.OK,
+        message: responseMessage.DETAILS_FOUND,
+        data: getUser,
+      });
+    }
   } catch (error) {
     return res.status(500).json({
-      status:StatusCodes.INTERNAL_SERVER_ERROR,
-      message:responseMessage.INTERNAL_SERVER_ERROR
-    })
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMessage.INTERNAL_SERVER_ERROR,
+    });
   }
-}
+};
 
-async function getAllUserDetails(req,res){
+exports.getAllUserDetails = async (req, res) => {
   try {
-    const userId = req.user
+    const userId = req.user;
 
-     const getUsers = await User.find({})
+    const getUsers = await User.find({});
 
-     if(!getUsers){
+    if (!getUsers) {
       return res.status(404).json({
-        status:StatusCodes.NOT_FOUND,
-        message:responseMessage.not_found
-      })
-     }else{
+        status: StatusCodes.NOT_FOUND,
+        message: responseMessage.NOTFOUND,
+      });
+    } else {
       return res.status(200).json({
-        status:StatusCodes.OK,
-        message:"Users details found",
-        data:getUsers
-      })
-     }
-
+        status: StatusCodes.OK,
+        message: responseMessage.DETAILS_FOUND,
+        data: getUsers,
+      });
+    }
   } catch (error) {
     return res.status(500).json({
-      status:StatusCodes.INTERNAL_SERVER_ERROR,
-      message:responseMessage.INTERNAL_SERVER_ERROR
-    })
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMessage.INTERNAL_SERVER_ERROR,
+    });
   }
-}
+};
 
-async function changePassword(req, res) {
+exports.changePassword = async (req, res) => {
   try {
     const userId = req.user;
 
@@ -382,14 +369,14 @@ async function changePassword(req, res) {
     if (!checkOldPassword) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMessage.passwordnotmatch,
+        message: responseMessage.OLD_PASSWORD_NOT_MATCH,
       });
     }
     const checkNewPassword = await bcrypt.compare(newPassword, user.password);
     if (checkNewPassword) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMessage.newpasswordnotmatch,
+        message: responseMessage.NEW_PASSWORD_MATCH,
       });
     }
     const passwordHash = await passwordEncrypt(newPassword, user.password);
@@ -402,27 +389,27 @@ async function changePassword(req, res) {
       .then((updatePassword) => {
         return res.status(200).json({
           status: StatusCodes.OK,
-          message: responseMessage.passwordupdate,
+          message: responseMessage.PASSWORD_UPDATE,
           data: updatePassword,
         });
       })
       .catch((err) => {
         return res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          message: responseMessage.notupdatepassword,
+          message: responseMessage.NOT_UPDATE_PASSWORD,
           err: err,
         });
       });
   } catch (error) {
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal Server Error",
+      message: responseMessage.INTERNAL_SERVER_ERROR,
       error: error,
     });
   }
-}
+};
 
-async function forgotPassword(req, res) {
+exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -435,7 +422,7 @@ async function forgotPassword(req, res) {
       if (!checkEmail) {
         return res.status(404).json({
           status: StatusCodes.NOT_FOUND,
-          message: responseMessage.not_found,
+          message: responseMessage.NOTFOUND,
         });
       }
       //const otpExpires = otpExpireTime;
@@ -447,25 +434,25 @@ async function forgotPassword(req, res) {
         { $set: { otp: otpCode, otpExpire: otpExpire } },
         { new: true }
       );
-       await SendEmail(email, otpCode);
-       
+      await SendEmail(email, otpCode);
+
       return res.status(200).json({
         status: StatusCodes.OK,
-        message: "Otp Send Successfully in your email",
+        message: responseMessage.SEND_OTP,
         // otp: otp,
         otp: otpCode,
       });
     }
   } catch (error) {
     return res.status(500).json({
-      success: false,
+     status:StatusCodes.INTERNAL_SERVER_ERROR,
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      error: error,
+      
     });
   }
-}
+};
 
-async function verifyOtp(req, res) {
+exports.verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
     const otpData = await User.findOne({ email, otp });
@@ -480,41 +467,41 @@ async function verifyOtp(req, res) {
       if (currentTime <= otpExpirationTime) {
         res
           .status(200)
-          .json({ status: StatusCodes.OK, message: responseMessage.verify });
+          .json({ status: StatusCodes.OK, message: responseMessage.VERIFY });
       } else {
         res.status(400).json({
           status: StatusCodes.BAD_REQUEST,
-          error: responseMessage.otpexpired,
+          error: responseMessage.OTPEXPIRED,
         });
       }
     } else {
       res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        error: responseMessage.otpinvalid,
+        error: responseMessage.OTPINVALID,
       });
     }
   } catch (error) {
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: "Internal Server Error",
-      error: error,
+      message:responseMessage.INTERNAL_SERVER_ERROR,
+     
     });
   }
-}
+};
 
-async function resetPassword(req, res) {
+exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword, confirmPassword } = req.body;
 
     if (!email || !newPassword || !confirmPassword) {
       return res.status(403).json({
         status: StatusCodes.FORBIDDEN,
-        message: responseMeassage.Required,
+        message: responseMessage.REQUIRED,
       });
     } else if (!passwordValidate(newPassword)) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMessage.passwordvalidate,
+        message: responseMessage.PASSWORD_VALIDATE,
       });
     } else {
       const user = await User.findOne({ email });
@@ -522,18 +509,18 @@ async function resetPassword(req, res) {
       if (!user) {
         return res.status(404).json({
           status: StatusCodes.NOT_FOUND,
-          message: responseMessage.not_found,
+          message: responseMessage.NOTFOUND,
         });
       } else {
         if (newPassword !== confirmPassword) {
           return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMessage.notmatch,
+            message: responseMessage.NOT_MATCH,
           });
         } else if (user.otpExpire < new Date()) {
           return res.status(400).json({
             status: StatusCodes.BAD_REQUEST,
-            message: responseMessage.session_time_out,
+            message: responseMessage.SESSION_TIME_OUT,
           });
         } else {
           const passwordHash = await passwordEncrypt(newPassword);
@@ -545,7 +532,7 @@ async function resetPassword(req, res) {
 
           return res.status(200).json({
             status: StatusCodes.OK,
-            message: responseMessage.passwordupdate,
+            message: responseMessage.PASSWORD_UPDATE,
           });
         }
       }
@@ -553,12 +540,12 @@ async function resetPassword(req, res) {
   } catch (error) {
     return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: responseMeassage.internal_server_error,
+      message: responseMessage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
-async function updateUser(req, res) {
+exports.updateUser = async (req, res) => {
   try {
     const userId = req.user;
     const { email, phone } = req.body;
@@ -568,8 +555,8 @@ async function updateUser(req, res) {
 
     if (existingUser || existingPhone) {
       const message = existingUser
-        ? responseMessage.existinguser
-        : responseMessage.existingphone;
+        ? responseMessage.EXUSTING_USER
+        : responseMessage.EXISTING_PHONE;
 
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
@@ -582,7 +569,7 @@ async function updateUser(req, res) {
     if (!user) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMessage.not_found,
+        message: responseMessage.NOTFOUND,
       });
     }
 
@@ -599,20 +586,20 @@ async function updateUser(req, res) {
 
     return res.status(200).json({
       status: StatusCodes.OK,
-      message: "User Data Updated Successfully",
+      message: responseMessage.UPDATE_DETAILS,
       data: result,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error,
+     status:StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMessage.INTERNAL_SERVER_ERROR,
+ 
     });
   }
-}
+};
 
-async function uploadImage(req, res) {
+exports.uploadImage = async (req, res) => {
   try {
     const userId = req.user;
 
@@ -621,10 +608,9 @@ async function uploadImage(req, res) {
     if (!user) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMessage.not_found,
+        message: responseMessage.NOTFOUND,
       });
-    }
-    else {
+    } else {
       const profileImageUrl = user.profileimage;
 
       if (profileImageUrl) {
@@ -650,44 +636,27 @@ async function uploadImage(req, res) {
 
     return res.status(200).json({
       status: StatusCodes.OK,
-      message: "User Data Updated Successfully",
+      message: responseMessage.UPDATE_DETAILS,
       data: result,
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-      error: error,
+      status:StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMessage.INTERNAL_SERVER_ERROR,
+
     });
   }
-}
-async function logout(req, res){
+};
+exports.logout = async (req, res) => {
   try {
     const token = req.headers.auth;
 
-  return res.status(200).json({
-    status: StatusCodes.OK,
-    message: responseMessage.LOGOUT,
-  });
-    
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responseMessage.LOGOUT,
+    });
   } catch (error) {
-   console.log(error); 
+    console.log(error);
   }
-}
-
-module.exports = {
-  addUpdateUser,
-  addUser,
-  loginUser,
-  changePassword,
-  forgotPassword,
-  verifyOtp,
-  resetPassword,
-  updateUser,
-  uploadImage,
-  //renderLogin,
-  getUserDetails,
-  getAllUserDetails,
-  logout
 };

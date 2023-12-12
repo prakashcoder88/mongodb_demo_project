@@ -1,11 +1,11 @@
 const { StatusCodes } = require("http-status-codes");
 const razorpay = require("../utils/razorpay");
-const responseMeassage = require("../utils/responseMeassage.json");
+const responseMeassage = require("../utils/responseMeassage.js");
 const Product = require("../models/product");
 const Order = require("../models/order");
 const Cart = require("../models/cart");
 
-const orderCreate = async (req, res) => {
+exports.orderCreate = async (req, res) => {
   try {
     const userId = req.user._id;
     const { cartId, status } = req.body;
@@ -18,7 +18,7 @@ const orderCreate = async (req, res) => {
     if (!cartData) {
       return res.status(400).json({
         status:StatusCodes.BAD_REQUEST,
-        message: "No items in cart",
+        message: responseMeassage.PRODUCT_NOT_IN_CART,
       });
     }
 
@@ -32,33 +32,33 @@ const orderCreate = async (req, res) => {
 
         return res.status(400).json({
           status:StatusCodes.BAD_REQUEST,
-          message: "Product not found",
+          message: responseMeassage.PRODUCT_NOT_FOUND,
         });
       }
 
       if (productData.stock < quantity) {
         return res.status(400).json({
           status:StatusCodes.BAD_REQUEST,
-          message: "Out of stock",
+          message: responseMeassage.OUTOFF_STOCK,
         });
       }
       productData.stock -= quantity;
       await productData.save();
     }
 
-    let orderData = new Order({
+    let orderData = new Order.create({
       userId,
       products: cartData.products,
       totalamount: cartData.totalamount,
       status: status,
     });
 
-    await orderData.save();
+    // await orderData.save();
     await Cart.findByIdAndDelete(cartId);
 
     return res.status(201).json({
       status:StatusCodes.CREATED,
-      message: "Order created successfully",
+      message: responseMeassage.ORDER_CREATED,
       data: orderData,
     });
   } catch (error) {
@@ -72,7 +72,7 @@ const orderCreate = async (req, res) => {
   }
 };
 
-// const renderProductPage = async (req, res) => {
+// exports.renderProductPage = async (req, res) => {
 //   try {
 //         const cartId = await Cart.find();
 //     console.log(cartId);
@@ -83,7 +83,7 @@ const orderCreate = async (req, res) => {
 //   }
 // };
 
-// const orderCreate = async (req, res) => {
+// exports.orderCreate = async (req, res) => {
 //   try {
 //     const userId = req.user._id;
 //     const cartId = req.body.cart_id;
@@ -186,7 +186,3 @@ const orderCreate = async (req, res) => {
 //   }
 // };
 
-module.exports = {
-  orderCreate,
-  // renderProductPage,
-};

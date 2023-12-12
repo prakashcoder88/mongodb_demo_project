@@ -1,12 +1,13 @@
-const fs = require('fs')
+const fs = require("fs");
+const mongoose = require('mongoose')
 const { StatusCodes } = require("http-status-codes");
-const responseMeassage = require("../utils/responseMeassage.json");
+const responseMeassage = require("../utils/responseMeassage.js");
 const Favorite = require("../models/favorite");
 const Product = require("../models/product");
 const User = require("../models/user");
+const { pipeline } = require("stream");
 
-
-async function addProduct(req, res) {
+exports.addProduct = async (req, res) => {
   try {
     const {
       productcode,
@@ -24,12 +25,12 @@ async function addProduct(req, res) {
     const existingProdcutcode = await Product.findOne({ productcode });
 
     if (existingProdcutcode) {
-      res.status(400).json({
+      return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
         message: responseMeassage.PRODUCTEXIST,
       });
     } else {
-      const productData = new Product({
+      const productData = new Product.create({
         productcode,
         brand,
         description,
@@ -43,94 +44,73 @@ async function addProduct(req, res) {
         reviews,
       });
 
-      productData
-        .save()
-        .then((data) => {
-          res.status(201).json({
-            status: StatusCodes.CREATED,
-            message: responseMeassage.PRODUCTADD,
-            data: data,
-          });
-        })
-        .catch((err) => {
-          res.status(400).json({
-            status: StatusCodes.BAD_REQUEST,
-            message: responseMeassage.PRODUCTNOTADD,
-          });
-        });
+      return res.status(201).json({
+        status: StatusCodes.CREATED,
+        message: responseMeassage.PRODUCTADD,
+        data: productData,
+      });
     }
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
-async function productStatusChange(req, res) {
+};
+exports.productStatusChange = async (req, res) => {
   try {
     const productId = req.params.id;
     const { status } = req.body;
 
-  Product.findOneAndUpdate(
+    const result = await Product.findByIdAndUpdate(
       { _id: productId },
       { $set: { status } },
       { new: true }
-    ).then((result)=>{
-
-      res.status(200).json({
-        status: StatusCodes.OK,
-        message: "Status update successfully",
-        data: result,
-      });
-    })
+    );
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responseMeassage.PRODUCT_STATUS,
+      data: result,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
+    // console.log(error);
+    return res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
-async function likeDislikeProduct(req, res) {
+};
+exports.likeDislikeProduct = async (req, res) => {
   try {
     const userId = req.user._id;
     const { productId, isLike } = req.body;
-    Favorite.findOneAndUpdate(
+    const data = await Favorite.findByIdAndUpdate(
       { userId, productId },
       { isLike },
-      { new: true, upsert: true }
-    )
-      .then((data) => {
-        const message = isLike
-          ? responseMeassage.LIKED
-          : responseMeassage.DISLIKED;
-        res.status(200).json({
-          status: StatusCodes.OK,
-          message,
-          data: data,
-        });
-      })
-      .catch((err) => {
-        res.status(400).json({
-          status: StatusCodes.BAD_REQUEST,
-          message: "Please try agin",
-        });
-      });
+      { new: true } //upsert: true
+    );
+
+    const message = isLike ? responseMeassage.LIKED : responseMeassage.DISLIKED;
+
+    res.status(200).json({
+      status: StatusCodes.OK,
+      message,
+      data: data,
+    });
   } catch (error) {
     res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
-async function allProduct(req, res) {
+};
+exports.allProduct = async (req, res) => {
   try {
     const userId = req.user._id;
 
     const AllProducts = await Product.find({
       isDelete: false,
     });
-
 
     const productData = await Promise.all(
       AllProducts.map(async (product) => {
@@ -139,14 +119,14 @@ async function allProduct(req, res) {
           productId: product._id,
         });
 
-      const likeStatus = {
-        ...product.toObject(),
-        isLike: likeProduct ? true : false,
-      };
+        const likeStatus = {
+          ...product.toObject(),
+          isLike: likeProduct ? true : false,
+        };
 
-      return likeStatus;
-    })
-    )
+        return likeStatus;
+      })
+    );
 
     res.status(200).send({
       status: StatusCodes.OK,
@@ -154,14 +134,72 @@ async function allProduct(req, res) {
       data: productData,
     });
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
-async function favoriteProduct(req, res) {
+};
+// exports.allProductDetails = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+
+//     const productData = await Product.aggregate([
+//       {
+//         $lookup: {
+//           from: "Favorites",
+//           let: { productId: "$_id" },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $and: [
+//                     { $eq: ["$userID", userId] },
+//                     { $eq: ["$productId", "$$productId"] },
+//                   ],
+//                 },
+//               },
+//             },
+//           ],
+//           as: "likeProduct",
+//         },
+//       },
+//       {
+//         $addFields:{
+//           isLike:{
+//             $cond:{
+//               if:{$gt:[{$size:"$likeProduct"}, 0]},
+//               then:true,
+//               else:false
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $project:{
+//           likeProduct:0
+//         }
+//       },
+//       {
+//         $match: {
+//           isDelete: false,
+//         },
+//       },
+//     ]);
+//     res.status(200).send({
+//       status: StatusCodes.OK,
+//       message: "Get all data successfully",
+//       data: productData,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       status: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: responseMessage.INTERNAL_SERVER_ERROR,
+//     });
+//   }
+// };
+exports.favoriteProduct = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -185,9 +223,9 @@ async function favoriteProduct(req, res) {
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
-async function searchProduct(req, res) {
+exports.searchProduct = async (req, res) => {
   const search = req.query.q;
 
   if (!search) {
@@ -216,18 +254,19 @@ async function searchProduct(req, res) {
       ],
     });
     res.status(200).json({
-      status:StatusCodes.OK,
-      message:"Search details find successfully",
-      data:results });
+      status: StatusCodes.OK,
+      message: "Search details find successfully",
+      data: results,
+    });
   } catch (error) {
     res.status(500).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
-async function demoaggregate(req, res) {
+exports.demoaggregate = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -283,22 +322,20 @@ async function demoaggregate(req, res) {
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
-async function uploadImage(req, res) {
+exports.uploadImage = async (req, res) => {
   try {
-
     const productId = req.params.id;
 
-    const product = await Product.findOne({_id:productId})
-   
+    const product = await Product.findOne({ _id: productId });
+
     if (!product) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
         message: responseMeassage.not_found,
       });
-    } 
-    else {
+    } else {
       const productImageUrl = product.productimage;
 
       if (productImageUrl) {
@@ -323,29 +360,15 @@ async function uploadImage(req, res) {
     );
 
     return res.status(200).json({
-      status:StatusCodes.OK,
+      status: StatusCodes.OK,
       message: "Product image upload successfully",
       data: result,
     });
-  
   } catch (error) {
     console.log(error);
     return res.status(500).json({
-      status:StatusCodes.INTERNAL_SERVER_ERROR,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
-     
     });
   }
-}
-
-
-module.exports = {
-  addProduct,
-  productStatusChange,
-  likeDislikeProduct,
-  allProduct,
-  favoriteProduct,
-  searchProduct,
-  demoaggregate,
-  uploadImage
 };

@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const orderControllor = require('../controller/orderControllor')
+const orderControllor = require('../controller/OrderControllor')
 
 const{userVerifyJwtToken} =require('../middleware/auth')
 

@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const cartcontroller = require('../controller/cartControllor')
+const cartcontroller = require('../controller/CartControllor')
 const{userVerifyJwtToken} =require('../middleware/auth')
 
 
