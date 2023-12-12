@@ -13,11 +13,10 @@ exports.addCart = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         status: StatusCodes.NOT_FOUND,
-        message: responseMeassage.PRODUCTNOTFOUND,
+        message: responseMeassage.PRODUCT_NOT_FOUND,
       });
     }
     if (product.stock < quantity) {
-   
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
         message: "Product stock not available to given quantity",
@@ -73,7 +72,7 @@ exports.addCart = async (req, res) => {
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
 exports.userCartList = async (req, res) => {
   try {
@@ -94,7 +93,7 @@ exports.userCartList = async (req, res) => {
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
 exports.productQuantityUpdate = async (req, res) => {
   try {
@@ -131,7 +130,7 @@ exports.productQuantityUpdate = async (req, res) => {
       existingProduct.price = existingProduct.quantity * product.price;
 
       cartList.totalamount = cartList.products.reduce(
-        (total, product) => total  + product.price,
+        (total, product) => total + product.price,
         0
       );
 
@@ -155,8 +154,33 @@ exports.productQuantityUpdate = async (req, res) => {
       message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
-}
+};
 
+exports.cartDelete = async (req, res) => {
+  try {
+    const userId = req.user;
+    const cartId = req.params.id;
+    const cartData = await Cart.findById(cartId);
+    if(!cartData){
+      return res.status(404).json({
+        status:StatusCodes.NOT_FOUND,
+        message:responseMeassage.CART_NOT_FOUND
+      })
+    }else{
+      await Cart.deleteOne({ _id: cartId });
 
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responseMeassage.CART_DELETE,
+      data: cartData,
+    });
+    }
+  } catch (error) {
 
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMeassage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
 

@@ -5,6 +5,7 @@ const{userVerifyJwtToken} =require('../middleware/auth')
 
 
 router.post('/cart/add', userVerifyJwtToken,cartcontroller.addCart)
+router.post('/cart/delete/:id', userVerifyJwtToken,cartcontroller.cartDelete)
 router.get('/cart/cartlist', userVerifyJwtToken,cartcontroller.userCartList)
 router.patch('/cart/quntityupdate', userVerifyJwtToken,cartcontroller.productQuantityUpdate)
 

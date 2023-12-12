@@ -38,7 +38,13 @@ module.exports = {
     PRODUCT_ADD_CART:"Product add in cart successfully",
     OUTOFF_STOCK:"Out of stock",
     ORDER_CREATED:"Order created successfully",
-    PRODUCT_NOT_IN_CART:"No items in cart"
+    PRODUCT_NOT_IN_CART:"No items in cart",
+    PERMISSION_DENIED:"Permission denied",
+    PRODUCT_DELETE:"Product delete successfully",
+    CART_DELETE: "Cart itmes delete successfully",
+    CART_NOT_FOUND:"Cart not found",
+    INSUFFICIENT_PRODUCT_QUANTITY:"Insufficient quantity in stock for the requested order.",
+    ORDER_PLACED: 'Order successfully placed.',
 
 
 

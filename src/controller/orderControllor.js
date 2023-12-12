@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const razorpay = require("../utils/razorpay");
+// const razorpay = require("../utils/razorpay");
 const responseMeassage = require("../utils/responseMeassage.js");
 const Product = require("../models/product");
 const Order = require("../models/order");
@@ -17,7 +17,7 @@ exports.orderCreate = async (req, res) => {
 
     if (!cartData) {
       return res.status(400).json({
-        status:StatusCodes.BAD_REQUEST,
+        status: StatusCodes.BAD_REQUEST,
         message: responseMeassage.PRODUCT_NOT_IN_CART,
       });
     }
@@ -29,16 +29,15 @@ exports.orderCreate = async (req, res) => {
       const productData = await Product.findById(productId);
 
       if (!productData) {
-
         return res.status(400).json({
-          status:StatusCodes.BAD_REQUEST,
+          status: StatusCodes.BAD_REQUEST,
           message: responseMeassage.PRODUCT_NOT_FOUND,
         });
       }
 
       if (productData.stock < quantity) {
         return res.status(400).json({
-          status:StatusCodes.BAD_REQUEST,
+          status: StatusCodes.BAD_REQUEST,
           message: responseMeassage.OUTOFF_STOCK,
         });
       }
@@ -46,28 +45,76 @@ exports.orderCreate = async (req, res) => {
       await productData.save();
     }
 
-    let orderData = new Order.create({
+    let orderData = new Order({
       userId,
       products: cartData.products,
       totalamount: cartData.totalamount,
       status: status,
     });
 
-    // await orderData.save();
+    await orderData.save();
     await Cart.findByIdAndDelete(cartId);
 
     return res.status(201).json({
-      status:StatusCodes.CREATED,
+      status: StatusCodes.CREATED,
       message: responseMeassage.ORDER_CREATED,
       data: orderData,
     });
   } catch (error) {
-
     console.log(error);
     return res.status(500).send({
-     status:StatusCodes.INTERNAL_SERVER_ERROR,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
       message: responseMeassage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
 
+exports.placeOrder = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const productId = req.params.id;
+
+    const orderQuantity = req.body.quantity || 1;
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        status: StatusCodes.NOT_FOUND,
+        message: responseMeassage.PRODUCT_NOT_FOUND,
+      });
+    } else if (product.stock < orderQuantity) {
+      return res.status(404).json({
+        status: StatusCodes.NOT_FOUND,
+        message: responseMeassage.INSUFFICIENT_PRODUCT_QUANTITY,
+      });
+    } else {
+      const newOrder = new Order({
+        userId: userId,
+        products: [
+          {
+            productId: product._id,
+            quantity: orderQuantity,
+          },
+        ],
+        totalamount: product.price * orderQuantity,
+      });
+
+      const order = await newOrder.save();
+      await Product.findByIdAndUpdate(productId, {
+        $inc: { stock: -orderQuantity },
+      });
+      return res.status(200).json({
+        status: StatusCodes.OK,
+        message: responseMeassage.ORDER_PLACED,
+        data: order,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMeassage.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -185,4 +232,3 @@ exports.orderCreate = async (req, res) => {
 //     });
 //   }
 // };
-

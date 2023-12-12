@@ -1,5 +1,5 @@
 const fs = require("fs");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const { StatusCodes } = require("http-status-codes");
 const responseMeassage = require("../utils/responseMeassage.js");
 const Favorite = require("../models/favorite");
@@ -27,7 +27,7 @@ exports.addProduct = async (req, res) => {
     if (existingProdcutcode) {
       return res.status(400).json({
         status: StatusCodes.BAD_REQUEST,
-        message: responseMeassage.PRODUCTEXIST,
+        message: responseMeassage.PRODUCT_EXIST,
       });
     } else {
       const productData = new Product.create({
@@ -46,7 +46,7 @@ exports.addProduct = async (req, res) => {
 
       return res.status(201).json({
         status: StatusCodes.CREATED,
-        message: responseMeassage.PRODUCTADD,
+        message: responseMeassage.PRODUCT_ADD,
         data: productData,
       });
     }
@@ -363,6 +363,45 @@ exports.uploadImage = async (req, res) => {
       status: StatusCodes.OK,
       message: "Product image upload successfully",
       data: result,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: responseMeassage.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+exports.productDelete = async (req, res) => {
+  try {
+    const userId = req.user;
+
+    const productId = req.params.id;
+
+    const user = await User.findById(userId);
+
+    if (!user || !user.role) {
+      return res.status(403).json({
+        status: StatusCodes.FORBIDDEN,
+        message: responseMeassage.PERMISSION_DENIED,
+      });
+    }
+
+    const findProduct = await Product.findById(productId);
+
+    if (!findProduct) {
+      return res.status(404).json({
+        status: StatusCodes.NOT_FOUND,
+        message: responseMeassage.PRODUCT_NOT_FOUND,
+      });
+    }
+
+    await Product.deleteOne({ _id: productId });
+
+    return res.status(200).json({
+      status: StatusCodes.OK,
+      message: responseMeassage.PRODUCT_DELETE,
+      data: findProduct,
     });
   } catch (error) {
     console.log(error);

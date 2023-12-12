@@ -8,6 +8,7 @@ const{userVerifyJwtToken} =require('../middleware/auth')
 
 
 router.post("/order/ordercreate", userVerifyJwtToken,orderControllor.orderCreate )
+router.post("/order/placeOrder/:id", userVerifyJwtToken,orderControllor.placeOrder )
 //router.get("/order/payment", orderControllor.renderProductPage )
 
 
